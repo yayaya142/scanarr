@@ -10,23 +10,30 @@ const Reports: React.FC = () => {
   const [scans, setScans] = useState<Scan[]>([]);
   const [selectedScanId, setSelectedScanId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
+    setIsLoading(true);
     try {
       const [files, scansData] = await Promise.all([
         getAllProblemFiles(),
         getScans()
       ]);
       
+      // Filter out scans with no problem files
+      const scansWithProblems = scansData.filter(scan => scan.problemFileCount > 0);
+      
       setProblemFiles(files);
-      setScans(scansData);
+      setScans(scansWithProblems);
     } catch (error) {
       console.error('Error loading problem files:', error);
       toast.error('Failed to load problem files');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -46,9 +53,31 @@ const Reports: React.FC = () => {
     ? 'All Scans' 
     : scans.find(scan => scan.id === selectedScanId)?.date || 'Unknown Date';
 
-  const handleDownloadReport = () => {
-    toast.success('Downloading full report');
-    // In a real app, this would download a comprehensive report
+  const handleDownloadReport = (scanId: string, format: 'json' | 'html' = 'html') => {
+    // In a real application, this would point to the API endpoint
+    const scan = scans.find(s => s.id === scanId || scanId === 'all');
+    
+    if (!scan && scanId !== 'all') {
+      toast.error('Scan not found');
+      return;
+    }
+    
+    if (filteredFiles.length === 0) {
+      toast.warning('No problematic files to download');
+      return;
+    }
+    
+    const reportUrl = scanId === 'all' 
+      ? `/api/reports/latest/download?format=${format}` 
+      : `/api/reports/${scanId}/download?format=${format}`;
+    
+    console.log(`Downloading report: ${reportUrl}`);
+    
+    // Simulate download
+    toast.success(`Report downloading in ${format.toUpperCase()} format`);
+    
+    // In a real app, this would trigger the download
+    // window.open(reportUrl, '_blank');
   };
 
   return (
@@ -58,10 +87,11 @@ const Reports: React.FC = () => {
           <h2 className="text-2xl font-semibold">Problem Reports</h2>
           <button 
             className="scanarr-btn scanarr-btn-primary flex items-center space-x-2"
-            onClick={handleDownloadReport}
+            onClick={() => handleDownloadReport(selectedScanId)}
+            disabled={filteredFiles.length === 0}
           >
             <Download size={16} />
-            <span>Download Full Report</span>
+            <span>Download Report</span>
           </button>
         </div>
 
@@ -108,7 +138,12 @@ const Reports: React.FC = () => {
 
         {/* Problem Files List */}
         <div className="space-y-4">
-          {filteredFiles.length > 0 ? (
+          {isLoading ? (
+            <div className="scanarr-card p-8 text-center">
+              <div className="h-8 w-8 border-4 border-t-primary animate-spin rounded-full mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading problem files...</p>
+            </div>
+          ) : filteredFiles.length > 0 ? (
             filteredFiles.map((file) => (
               <div key={file.id} className="scanarr-card">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-start space-y-2 md:space-y-0">
@@ -168,7 +203,9 @@ const Reports: React.FC = () => {
               <FileWarning className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium">No Problem Files Found</h3>
               <p className="text-muted-foreground mt-2">
-                {searchQuery ? 'Try adjusting your search query' : 'All your files are in good condition'}
+                {searchQuery ? 'Try adjusting your search query' : 
+                 selectedScanId !== 'all' ? 'No issues were found in this scan.' : 
+                 'All your files are in good condition'}
               </p>
             </div>
           )}

@@ -1,270 +1,280 @@
 
 import React, { useState } from 'react';
-import { HelpCircle, ChevronDown, ChevronUp, Terminal, Database, AlertTriangle } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import ScanarrLayout from '@/components/ScanarrLayout';
-
-interface FAQItem {
-  question: string;
-  answer: React.ReactNode;
-}
+import { HelpCircle, FileText, Terminal, AlertCircle } from 'lucide-react';
 
 const Support: React.FC = () => {
-  const [openFAQ, setOpenFAQ] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState('faq');
 
-  const toggleFAQ = (index: number) => {
-    setOpenFAQ(openFAQ === index ? null : index);
-  };
-
-  const faqItems: FAQItem[] = [
+  const faqItems = [
     {
-      question: 'How do I install Scanarr using Docker?',
-      answer: (
-        <div className="space-y-2">
-          <p>You can install Scanarr using Docker with the following command:</p>
-          <div className="bg-secondary p-3 rounded-md overflow-x-auto">
-            <pre className="text-sm">
-              <code>
-                docker run -d \<br />
-                --name=scanarr \<br />
-                -p 8080:8080 \<br />
-                -v /path/to/config:/config \<br />
-                -v /path/to/media:/media \<br />
-                --restart unless-stopped \<br />
-                scanarr/scanarr:latest
-              </code>
-            </pre>
-          </div>
-          <p>Or using docker-compose:</p>
-          <div className="bg-secondary p-3 rounded-md overflow-x-auto">
-            <pre className="text-sm">
-              <code>
-                version: '3'<br />
-                services:<br />
-                &nbsp;&nbsp;scanarr:<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;image: scanarr/scanarr:latest<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;container_name: scanarr<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;ports:<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 8080:8080<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;volumes:<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- /path/to/config:/config<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- /path/to/media:/media<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;restart: unless-stopped
-              </code>
-            </pre>
-          </div>
-        </div>
-      )
+      question: "What file formats does Scanarr support?",
+      answer: "Scanarr supports most common video formats including MKV, MP4, AVI, and MOV files. It can analyze any video file that can be processed by FFmpeg."
     },
     {
-      question: 'Where is the data stored?',
-      answer: (
-        <div>
-          <p>Scanarr stores all its data in the following locations inside the Docker container:</p>
-          <ul className="list-disc list-inside space-y-1 mt-2">
-            <li><strong>/config/scanarr.db</strong> - SQLite database containing all scan history and settings</li>
-            <li><strong>/reports/</strong> - Folder containing all generated reports organized by scan ID</li>
-          </ul>
-          <p className="mt-2">When mapping volumes in Docker, make sure to map these locations to persist your data.</p>
-        </div>
-      )
+      question: "Why are H.264 High10 files marked as problematic?",
+      answer: "H.264 High10 profile files often have compatibility issues with certain devices, particularly older or less powerful hardware that may struggle with 10-bit color depth decoding."
     },
     {
-      question: 'How often should I schedule scans?',
-      answer: (
-        <div>
-          <p>The optimal scan frequency depends on how often your media library changes:</p>
-          <ul className="list-disc list-inside space-y-1 mt-2">
-            <li><strong>Frequent changes (daily):</strong> Every 12-24 hours</li>
-            <li><strong>Moderate changes (weekly):</strong> Every 24-48 hours</li>
-            <li><strong>Occasional changes:</strong> Every 72 hours or weekly</li>
-          </ul>
-          <p className="mt-2">Remember that scans will consume CPU resources, so schedule accordingly.</p>
-        </div>
-      )
+      question: "Can I exclude certain folders from scans?",
+      answer: "Currently, Scanarr will scan all folders specified in the Settings page. To exclude a folder, remove it from the scan folders list. In a future update, we plan to add a specific exclusion list feature."
     },
     {
-      question: 'Why are certain files flagged as problematic?',
-      answer: (
-        <div>
-          <p>Files are flagged as problematic based on these criteria:</p>
-          <ul className="list-disc list-inside space-y-1 mt-2">
-            <li><strong>H.264 with High10 profile:</strong> This profile requires more processing power to decode.</li>
-            <li><strong>Color bit depth > 8bit:</strong> Higher bit depths require more compatible hardware for playback.</li>
-            <li><strong>DTS or EAC3 audio:</strong> These audio codecs may not be supported on all devices.</li>
-            <li><strong>No embedded subtitles:</strong> Files without subtitles may be less accessible.</li>
-            <li><strong>Custom keywords:</strong> Any files matching your custom rules will also be flagged.</li>
-          </ul>
-        </div>
-      )
+      question: "Does Scanarr modify my files?",
+      answer: "No, Scanarr is a read-only tool. It analyzes your media files without making any changes to them. It only reports potential issues and doesn't perform any automatic fixes."
     },
     {
-      question: 'How do I set up Telegram notifications?',
-      answer: (
-        <div className="space-y-2">
-          <p>To set up Telegram notifications:</p>
-          <ol className="list-decimal list-inside space-y-1">
-            <li>Create a Telegram bot by messaging @BotFather on Telegram</li>
-            <li>Copy the API token provided by BotFather</li>
-            <li>Add your bot to a group or start a private conversation with it</li>
-            <li>Get your Chat ID (use @getidsbot or other methods)</li>
-            <li>Enter these details in Scanarr's Settings page</li>
-            <li>Configure notification triggers according to your preferences</li>
-            <li>Click "Test Notifications" to verify your setup</li>
-          </ol>
-        </div>
-      )
+      question: "How can I customize which issues are reported?",
+      answer: "You can add custom rules in the Settings page to flag files containing specific keywords in their metadata. The built-in system rules cannot be modified, but you can ignore their results in your workflow."
     },
     {
-      question: 'Can I add custom rules for detecting problematic files?',
-      answer: (
-        <div>
-          <p>Yes, Scanarr allows you to define custom keywords that will flag files as problematic when found in the metadata.</p>
-          <p className="mt-2">Some examples of useful keywords:</p>
-          <ul className="list-disc list-inside space-y-1 mt-2">
-            <li><strong>x265, HEVC, h.265</strong> - For detecting HEVC-encoded content</li>
-            <li><strong>10bit, 12bit</strong> - For high bit depth content</li>
-            <li><strong>HDR, HDR10, HDR10+, Dolby Vision</strong> - For HDR formats</li>
-            <li><strong>opus, vorbis</strong> - For less common audio codecs</li>
-          </ul>
-          <p className="mt-2">Add these in the Settings → Detection Rules → Custom Rules section.</p>
-        </div>
-      )
+      question: "How frequently should I run scans?",
+      answer: "We recommend setting the scan frequency based on how often you add new media. For active libraries, daily scans (24 hours) work well. For less active libraries, weekly scans may be sufficient."
     },
     {
-      question: 'How long is scan history kept?',
-      answer: (
-        <p>Scanarr automatically deletes scan history and associated reports after 90 days to conserve storage space. If you need to retain data for longer periods, consider backing up the SQLite database and report files.</p>
-      )
+      question: "Can I run Scanarr without Docker?",
+      answer: "While Docker is the recommended deployment method, you can run Scanarr directly if you install all dependencies (Node.js, FFmpeg) on your system. See the Installation section for details."
     },
     {
-      question: 'Is there a way to exclude certain folders from scans?',
-      answer: (
-        <p>Currently, Scanarr doesn't have a built-in exclusion system. You should only include the specific folders you want to scan in the Settings → Scan Folders section. A folder exclusion feature is planned for future releases.</p>
-      )
+      question: "Will Scanarr work with my Plex/Jellyfin/Emby library?",
+      answer: "Yes, Scanarr can scan any media library by pointing it to your media folders. It doesn't directly integrate with media servers but works alongside them by analyzing the same files."
     },
     {
-      question: 'What information is included in the downloadable reports?',
-      answer: (
-        <div>
-          <p>The downloadable reports include:</p>
-          <ul className="list-disc list-inside space-y-1 mt-2">
-            <li><strong>JSON Reports:</strong> Complete data including file paths, all detected issues, and detailed metadata</li>
-            <li><strong>HTML Reports:</strong> Formatted report with tables and sections for easier human reading</li>
-          </ul>
-          <p className="mt-2">Both report types include information on what rules triggered each problematic file flag.</p>
-        </div>
-      )
+      question: "How resource-intensive are scans?",
+      answer: "Scanarr is designed to be lightweight, but scan resource usage depends on your library size. Large libraries may cause higher CPU usage during scans. You can schedule scans during off-peak hours to minimize impact."
     },
     {
-      question: 'How resource-intensive are the scans?',
-      answer: (
-        <div>
-          <p>Scan resource usage depends on your library size:</p>
-          <ul className="list-disc list-inside space-y-1 mt-2">
-            <li><strong>Small libraries (&lt;1000 files):</strong> Minimal impact, completes quickly</li>
-            <li><strong>Medium libraries (1000-10000 files):</strong> Moderate CPU/disk usage during scan</li>
-            <li><strong>Large libraries (&gt;10000 files):</strong> Considerable resources required, may take hours</li>
-          </ul>
-          <p className="mt-2">Consider scheduling scans during off-peak hours for large libraries.</p>
-        </div>
-      )
+      question: "Is there a limit to how many files Scanarr can analyze?",
+      answer: "There's no hard limit on the number of files Scanarr can analyze. Performance may degrade with extremely large libraries (100,000+ files). For best results with large libraries, consider organizing your scan folders into smaller sub-sections."
     }
   ];
 
   return (
     <ScanarrLayout>
-      <div className="space-y-8">
-        <div>
-          <h2 className="text-2xl font-semibold">Support</h2>
-          <p className="text-muted-foreground mt-1">
-            Find help, installation instructions, and answers to common questions.
-          </p>
-        </div>
+      <div className="space-y-6">
+        <h2 className="text-2xl font-semibold">Support</h2>
 
-        {/* Installation Instructions */}
-        <div className="scanarr-card">
-          <div className="flex items-center space-x-3 mb-4">
-            <Terminal className="text-primary" />
-            <h3 className="text-lg font-medium">Installation Instructions</h3>
+        <div className="scanarr-card space-y-6">
+          <div className="flex space-x-4 border-b border-border">
+            <button
+              className={`pb-2 px-1 font-medium ${activeTab === 'faq' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}
+              onClick={() => setActiveTab('faq')}
+            >
+              FAQ
+            </button>
+            <button
+              className={`pb-2 px-1 font-medium ${activeTab === 'installation' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}
+              onClick={() => setActiveTab('installation')}
+            >
+              Installation
+            </button>
+            <button
+              className={`pb-2 px-1 font-medium ${activeTab === 'troubleshooting' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}
+              onClick={() => setActiveTab('troubleshooting')}
+            >
+              Troubleshooting
+            </button>
           </div>
-          
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium">Docker Installation (Recommended)</h4>
-              <div className="bg-secondary p-3 rounded-md mt-2 overflow-x-auto">
-                <pre className="text-sm">
-                  <code>
-                    docker run -d \<br />
-                    --name=scanarr \<br />
-                    -p 8080:8080 \<br />
-                    -v /path/to/config:/config \<br />
-                    -v /path/to/media:/media \<br />
-                    --restart unless-stopped \<br />
-                    scanarr/scanarr:latest
-                  </code>
-                </pre>
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-medium">Using Docker Compose</h4>
-              <div className="bg-secondary p-3 rounded-md mt-2 overflow-x-auto">
-                <pre className="text-sm">
-                  <code>
-                    version: '3'<br />
-                    services:<br />
-                    &nbsp;&nbsp;scanarr:<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;image: scanarr/scanarr:latest<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;container_name: scanarr<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;ports:<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 8080:8080<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;volumes:<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- /path/to/config:/config<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- /path/to/media:/media<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;restart: unless-stopped
-                  </code>
-                </pre>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2 text-sm bg-secondary/50 p-3 rounded-md">
-              <Database className="text-primary h-4 w-4" />
-              <span>All data is stored in the <code>/config</code> directory in the container.</span>
-            </div>
-            
-            <div className="flex items-center space-x-2 text-sm bg-secondary/50 p-3 rounded-md">
-              <AlertTriangle className="text-destructive h-4 w-4" />
-              <span>For proper scanning, ensure the <code>/media</code> volume is correctly mapped to your media library.</span>
-            </div>
-          </div>
-        </div>
 
-        {/* FAQs */}
-        <div className="scanarr-card">
-          <div className="flex items-center space-x-3 mb-4">
-            <HelpCircle className="text-primary" />
-            <h3 className="text-lg font-medium">Frequently Asked Questions</h3>
-          </div>
-          
-          <div className="space-y-2">
-            {faqItems.map((faq, index) => (
-              <div key={index} className="border border-border rounded-md overflow-hidden">
-                <button
-                  className="w-full flex justify-between items-center p-4 text-left hover:bg-secondary/50 transition-colors"
-                  onClick={() => toggleFAQ(index)}
-                >
-                  <span className="font-medium">{faq.question}</span>
-                  {openFAQ === index ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                </button>
-                
-                {openFAQ === index && (
-                  <div className="p-4 bg-secondary/30 border-t border-border">
-                    {faq.answer}
+          {activeTab === 'faq' && (
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2 mb-4">
+                <HelpCircle className="text-primary" />
+                <h3 className="text-lg font-medium">Frequently Asked Questions</h3>
+              </div>
+              
+              <Accordion type="single" collapsible className="w-full">
+                {faqItems.map((item, index) => (
+                  <AccordionItem key={index} value={`item-${index}`}>
+                    <AccordionTrigger className="text-left font-medium">{item.question}</AccordionTrigger>
+                    <AccordionContent>
+                      <p className="text-muted-foreground">{item.answer}</p>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+          )}
+
+          {activeTab === 'installation' && (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 mb-4">
+                <FileText className="text-primary" />
+                <h3 className="text-lg font-medium">Installation Guide</h3>
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-medium mb-2">Docker Installation (Recommended)</h4>
+                  <div className="bg-secondary p-4 rounded-md">
+                    <pre className="text-sm overflow-x-auto">
+                      <code>
+{`# Create a docker-compose.yml file with these contents:
+version: '3'
+
+services:
+  scanarr:
+    image: scanarr/scanarr:latest
+    container_name: scanarr
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/config
+      - /path/to/media:/media
+    restart: unless-stopped
+
+# Then run:
+docker-compose up -d`}
+                      </code>
+                    </pre>
                   </div>
-                )}
+                  <p className="text-sm mt-2 text-muted-foreground">
+                    Replace '/path/to/media' with your actual media folders. Multiple media locations can be added as additional volume mounts.
+                  </p>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium mb-2">Environment Variables</h4>
+                  <table className="w-full text-sm">
+                    <thead className="text-left border-b border-border">
+                      <tr>
+                        <th className="pb-2">Variable</th>
+                        <th className="pb-2">Description</th>
+                        <th className="pb-2">Default</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      <tr>
+                        <td className="py-2 font-mono">TZ</td>
+                        <td>Timezone</td>
+                        <td>UTC</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 font-mono">PUID</td>
+                        <td>User ID for file permissions</td>
+                        <td>1000</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 font-mono">PGID</td>
+                        <td>Group ID for file permissions</td>
+                        <td>1000</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium mb-2">Manual Installation</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    If you prefer not to use Docker, you can install Scanarr manually.
+                  </p>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Prerequisites:</p>
+                    <ul className="text-sm list-disc ml-5 text-muted-foreground">
+                      <li>Node.js 16 or later</li>
+                      <li>FFmpeg properly installed and available in PATH</li>
+                    </ul>
+                  </div>
+                  <div className="bg-secondary p-4 rounded-md mt-3">
+                    <pre className="text-sm overflow-x-auto">
+                      <code>
+{`# Clone repository
+git clone https://github.com/scanarr/scanarr.git
+cd scanarr
+
+# Install dependencies
+npm install
+
+# Build the application
+npm run build
+
+# Start the server
+npm start`}
+                      </code>
+                    </pre>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {activeTab === 'troubleshooting' && (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 mb-4">
+                <AlertCircle className="text-primary" />
+                <h3 className="text-lg font-medium">Troubleshooting</h3>
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-medium mb-2">Common Issues</h4>
+                  
+                  <div className="space-y-4">
+                    <div className="p-4 border border-border rounded-md">
+                      <p className="font-medium">Unable to access media files</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Check that your Docker volumes are correctly mapped. The container needs read access to all media locations.
+                      </p>
+                      <div className="mt-2 text-sm">
+                        <p className="font-medium">Solution:</p>
+                        <p className="text-muted-foreground">
+                          Ensure the correct paths are specified in your docker-compose.yml file and that the PUID/PGID match the owner of your media files.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 border border-border rounded-md">
+                      <p className="font-medium">Telegram notifications not working</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        If you've set up Telegram but aren't receiving messages, check your Bot Token and Chat ID.
+                      </p>
+                      <div className="mt-2 text-sm">
+                        <p className="font-medium">Solution:</p>
+                        <p className="text-muted-foreground">
+                          Verify your Bot Token and Chat ID are correct. Ensure your bot has permission to send messages to the specified chat. Use the "Test Notifications" button to check connectivity.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 border border-border rounded-md">
+                      <p className="font-medium">Scans taking too long</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Large libraries can cause scans to take a long time.
+                      </p>
+                      <div className="mt-2 text-sm">
+                        <p className="font-medium">Solution:</p>
+                        <p className="text-muted-foreground">
+                          Consider splitting your library into smaller sections and scanning them separately. Ensure your host has sufficient resources (CPU/RAM) for the size of your library.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium mb-2">Logs</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Logs can help diagnose issues with Scanarr.
+                  </p>
+                  <div className="bg-secondary p-4 rounded-md">
+                    <pre className="text-sm overflow-x-auto">
+                      <code>
+{`# View logs via Docker
+docker logs scanarr
+
+# Or if using docker-compose
+docker-compose logs scanarr
+
+# Logs are also stored in:
+/config/logs/`}
+                      </code>
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </ScanarrLayout>

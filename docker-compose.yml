@@ -9,5 +9,11 @@ services:
       - "8080:8080"
     volumes:
       - ./config:/config
-      - /path/to/media:/media
+      - ./reports:/reports
+      - /media:/media:ro
+    environment:
+      - TZ=UTC
+      - PUID=1000
+      - PGID=1000
     restart: unless-stopped
+

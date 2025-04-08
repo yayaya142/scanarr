@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { toast } from "sonner";
 import { Folder, Clock, Filter, AlertTriangle, Settings as SettingsIcon, SendIcon, Save, X } from 'lucide-react';
 import ScanarrLayout from '@/components/ScanarrLayout';
+import FolderPicker from '@/components/FolderPicker';
 
 interface FolderPath {
   id: string;
@@ -41,6 +42,9 @@ const Settings: React.FC = () => {
     thresholdCount: 5
   });
 
+  const [folderPickerOpen, setFolderPickerOpen] = useState(false);
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+
   // Add a new empty folder path
   const addFolderPath = () => {
     const newFolderPath: FolderPath = {
@@ -60,6 +64,22 @@ const Settings: React.FC = () => {
     setFolderPaths(folderPaths.map(folder => 
       folder.id === id ? { ...folder, path: newPath } : folder
     ));
+  };
+
+  // Open folder picker
+  const openFolderPicker = (folderId: string) => {
+    setActiveFolderId(folderId);
+    const folderPath = folderPaths.find(f => f.id === folderId)?.path || '';
+    setFolderPickerOpen(true);
+  };
+
+  // Handle folder selection from the folder picker
+  const handleFolderSelected = (path: string) => {
+    if (activeFolderId) {
+      updateFolderPath(activeFolderId, path);
+    }
+    setFolderPickerOpen(false);
+    setActiveFolderId(null);
   };
 
   // Add a new custom rule
@@ -119,7 +139,14 @@ const Settings: React.FC = () => {
       }
     }
 
-    // In a real app, we would save to a database or configuration file
+    // In a real app, this would save to the server
+    console.log('Saving settings:', {
+      folderPaths,
+      scanFrequency,
+      customRules,
+      telegramSettings
+    });
+    
     toast.success('Settings saved successfully');
   };
 
@@ -130,8 +157,31 @@ const Settings: React.FC = () => {
       return;
     }
 
-    // In a real app, we would send a test message to the Telegram bot
-    toast.success('Test notification sent to Telegram');
+    // In a real implementation, this would call the server API
+    console.log('Testing Telegram notifications with:', {
+      botToken: telegramSettings.botToken,
+      chatId: telegramSettings.chatId
+    });
+    
+    // Simulate API call
+    const testMessage = {
+      chat_id: telegramSettings.chatId,
+      text: "Scanarr Test Notification: This is a test message from Scanarr to verify your Telegram notification settings.",
+      parse_mode: "HTML"
+    };
+    
+    console.log("Sending Telegram test notification with payload:", testMessage);
+    console.log(`Using Telegram API endpoint: https://api.telegram.org/bot${telegramSettings.botToken}/sendMessage`);
+    
+    // Show loading state
+    const toastId = toast.loading('Sending test notification to Telegram...');
+    
+    // Simulate response
+    setTimeout(() => {
+      toast.dismiss(toastId);
+      toast.success('Test notification sent to Telegram');
+      console.log("Telegram notification sent successfully");
+    }, 1500);
   };
 
   return (
@@ -158,13 +208,22 @@ const Settings: React.FC = () => {
           <div className="space-y-3">
             {folderPaths.map((folder) => (
               <div key={folder.id} className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={folder.path}
-                  onChange={(e) => updateFolderPath(folder.id, e.target.value)}
-                  placeholder="/path/to/media"
-                  className="scanarr-input"
-                />
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={folder.path}
+                    onChange={(e) => updateFolderPath(folder.id, e.target.value)}
+                    placeholder="/path/to/media"
+                    className="scanarr-input flex-1"
+                  />
+                  <button
+                    onClick={() => openFolderPicker(folder.id)}
+                    className="p-2 text-primary hover:bg-primary/10 rounded"
+                    title="Browse for folder"
+                  >
+                    <Folder size={18} />
+                  </button>
+                </div>
                 <button
                   onClick={() => removeFolderPath(folder.id)}
                   className="p-2 text-destructive hover:bg-destructive/10 rounded"
@@ -221,7 +280,7 @@ const Settings: React.FC = () => {
                   <p className="text-sm">If video codec is H.264 with High10 profile → mark as problematic</p>
                 </div>
                 <div className="p-3 bg-secondary rounded">
-                  <p className="text-sm">If color bit depth > 8bit → mark as problematic</p>
+                  <p className="text-sm">If color bit depth {'>'} 8bit → mark as problematic</p>
                 </div>
                 <div className="p-3 bg-secondary rounded">
                   <p className="text-sm">If audio codec is DTS or EAC3 → mark as problematic</p>
@@ -378,6 +437,17 @@ const Settings: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Folder Picker Dialog */}
+      <FolderPicker
+        open={folderPickerOpen}
+        onClose={() => {
+          setFolderPickerOpen(false);
+          setActiveFolderId(null);
+        }}
+        onSelect={handleFolderSelected}
+        initialPath={activeFolderId ? folderPaths.find(f => f.id === activeFolderId)?.path : '/'}
+      />
     </ScanarrLayout>
   );
 };

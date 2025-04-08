@@ -25,7 +25,7 @@ const Reports: React.FC = () => {
       ]);
       
       // Filter out scans with no problem files
-      const scansWithProblems = scansData.filter(scan => scan.problemFileCount > 0);
+      const scansWithProblems = scansData.filter(scan => scan.problemFiles > 0);
       
       setProblemFiles(files);
       setScans(scansWithProblems);

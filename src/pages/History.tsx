@@ -26,7 +26,7 @@ const History: React.FC = () => {
     
     // Filter out empty scans if showEmptyScans is false
     if (!showEmptyScans) {
-      filtered = filtered.filter(scan => scan.problemFileCount > 0);
+      filtered = filtered.filter(scan => scan.problemFiles > 0);
     }
     
     // Filter by search query
@@ -34,7 +34,7 @@ const History: React.FC = () => {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(scan => 
         scan.id.toLowerCase().includes(query) || 
-        scan.folderPath.toLowerCase().includes(query)
+        scan.folder.toLowerCase().includes(query)
       );
     }
     
@@ -64,7 +64,7 @@ const History: React.FC = () => {
     try {
       const data = await getScans();
       setScans(data);
-      setFilteredScans(data.filter(scan => scan.problemFileCount > 0));
+      setFilteredScans(data.filter(scan => scan.problemFiles > 0));
     } catch (error) {
       console.error('Error loading scans:', error);
       toast.error('Failed to load scan history');
@@ -80,7 +80,7 @@ const History: React.FC = () => {
       return;
     }
     
-    if (scan.problemFileCount === 0) {
+    if (scan.problemFiles === 0) {
       toast.warning('No problematic files in this scan to download');
       return;
     }
@@ -175,19 +175,19 @@ const History: React.FC = () => {
                         <span className="font-mono text-sm">{scan.id}</span>
                       </td>
                       <td className="py-3">
-                        <span className="text-sm truncate max-w-[200px] inline-block">{scan.folderPath}</span>
+                        <span className="text-sm truncate max-w-[200px] inline-block">{scan.folder}</span>
                       </td>
                       <td className="py-3 text-right">
-                        <span>{scan.fileCount.toLocaleString()}</span>
+                        <span>{scan.filesChecked.toLocaleString()}</span>
                       </td>
                       <td className="py-3 text-right">
-                        <span className={scan.problemFileCount > 0 ? 'text-destructive font-medium' : ''}>
-                          {scan.problemFileCount.toLocaleString()}
+                        <span className={scan.problemFiles > 0 ? 'text-destructive font-medium' : ''}>
+                          {scan.problemFiles.toLocaleString()}
                         </span>
                       </td>
                       <td className="py-3 pr-3">
                         <div className="flex justify-end space-x-2">
-                          {scan.problemFileCount > 0 ? (
+                          {scan.problemFiles > 0 ? (
                             <>
                               <button
                                 onClick={() => handleDownloadReport(scan.id, 'json')}
